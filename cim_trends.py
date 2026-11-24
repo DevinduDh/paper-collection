@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CIM publication trends across selected circuits / EDA conferences.
+CIM publication trends across selected computer architecture / EDA conferences.
 
 Step 1: count papers on compute-in-memory / processing-in-memory (CIM, PIM, IMC ...)
         per year, per venue  -> fig1_cim_per_year.png
@@ -38,15 +38,16 @@ API = "https://api.openalex.org/works"
 
 # venue label -> (include regex, exclude regex or None, group)
 VENUES = {
-    "ISSCC": (r"international solid[- ]state circuits conference|\bISSCC\b", None, "Circuits"),
-    "VLSI Symp.": (r"symposi\w* on vlsi", None, "Circuits"),
-    "CICC": (r"custom integrated circuits conference|\bCICC\b", None, "Circuits"),
-    "ESSERC/ESSCIRC": (r"european solid[- ]state|\bESSERC\b|\bESSCIRC\b|\bESSDERC\b", None, "Circuits"),
-    "ICCAD": (r"conference on computer[- ]aided design|\bICCAD\b", None, "Design/Systems"),
-    "ASP-DAC": (r"asia and south pacific design automation|\bASP-?DAC\b", None, "Design/Systems"),
-    "ISLPED": (r"low power electronics and design|\bISLPED\b", None, "Design/Systems"),
-    "ISCAS": (r"international symposium on circuits and systems|\bISCAS\b",
-              r"midwest|mwscas|latin|nordic|integrated circuits and systems", "Design/Systems"),
+    "MICRO": (r"symposium on microarchitecture|(?-i:\bMICRO\b)",
+              r"^\s*ieee micro\s*$", "Architecture"),          # IEEE Micro is the magazine
+    "ASPLOS": (r"architectural support for programming languages and operating systems|\bASPLOS\b",
+               None, "Architecture"),
+    "ISCA": (r"international symposium on computer architecture|\bISCA\b",
+             r"high[- ]performance computing|sbac|speech", "Architecture"),  # SBAC-PAD, Interspeech
+    "HPCA": (r"high[- ]performance computer architecture|\bHPCA\b", None, "Architecture"),
+    "DATE": (r"design,? automation,? (?:and|&) test in europe|(?-i:\bDATE\b)", None, "EDA"),
+    "DAC": (r"design automation conference|(?-i:\bDAC\b)",
+            r"asia and south pacific|asp-?dac|asme|design engineering technical", "EDA"),
 }
 VENUE_RX = {k: (re.compile(inc, re.I), re.compile(exc, re.I) if exc else None, grp)
             for k, (inc, exc, grp) in VENUES.items()}
@@ -199,10 +200,15 @@ def collect(y0, y1, broad):
             if not is_cim(title, abstract, broad):
                 continue
             doi = (rec.get("doi") or "").lower()
-            key = doi or (re.sub(r"\W+", "", title.lower()), rec.get("publication_year"))
-            if key in seen:
+            # One paper can be indexed as several OpenAlex works with different DOIs
+            # (e.g. ACM DL 10.5555/... and EDAA 10.7873/... for DATE), so dedupe on
+            # venue + normalized title as well as on the DOI.
+            keys = {(venue, re.sub(r"\W+", "", title.lower()))}
+            if doi:
+                keys.add(doi)
+            if keys & seen:
                 continue
-            seen.add(key)
+            seen |= keys
             rows.append({
                 "year": rec.get("publication_year"), "venue": venue,
                 "group": VENUE_RX[venue][2], "title": title, "doi": doi,
@@ -302,7 +308,7 @@ def main():
 
     plot_types(df, args.start, args.end, args.bin, "All venues",
                os.path.join(args.out, "fig2_type_trends_all.png"))
-    for grp in ("Circuits", "Design/Systems"):
+    for grp in sorted(df["group"].dropna().unique()):
         plot_types(df[df["group"] == grp], args.start, args.end, args.bin, grp,
                    os.path.join(args.out, f"fig2_type_trends_{grp.split('/')[0].lower()}.png"))
     print(f"\nWrote files to {args.out}/")
