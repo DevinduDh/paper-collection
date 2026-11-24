@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.pyc
+
+# Local scratch output (a curated snapshot goes in results/)
+out/
+
+# Secrets - never commit API keys
+.env
+*.key
