@@ -1,7 +1,7 @@
 # CIM publication trends
 
 Script for the Survey-CIM project. It counts how many papers on compute-in-memory
-(CIM) and processing-in-memory (PIM) appeared per year in a set of computer-architecture and
+(CIM) and processing-in-memory (PIM) appeared per year in a set of circuits and
 design-automation conferences, and shows how the type of paper changes over time
 (for example surveys, silicon implementations, simulators and tools).
 
@@ -9,10 +9,17 @@ It uses only metadata from OpenAlex (a free, open index). It does not scrape IEE
 
 ## Venues covered
 
-Architecture venues: MICRO, ASPLOS, ISCA, HPCA.
-EDA venues: DATE, DAC.
+Circuits: ISSCC, Symposium on VLSI Technology and Circuits, CICC, ESSERC/ESSCIRC.
+Design and systems: ICCAD, ASP-DAC, ISLPED, ISCAS.
+Architecture: MICRO, ASPLOS, ISCA, HPCA.
+EDA: DATE, DAC.
 
-To add or change a venue, edit the VENUES table near the top of cim_trends.py.
+Each venue has a label, an include pattern, an optional exclude pattern and a group. They are
+defined in the VENUES table near the top of cim_trends_v2.py. To add or change a venue, edit that
+table. The group decides which of the fig2 plots the venue appears in. Check a new pattern against
+real venue names in OpenAlex before trusting it, because names such as ISCA (also a speech
+conference), IEEE Micro (a magazine) and the ASME Design Automation Conference share words with
+the intended venues.
 
 ## Requirements
 
@@ -25,9 +32,9 @@ Install the packages:
 
 ## Usage
 
-Run from the folder that contains cim_trends.py.
+Run from the folder that contains cim_trends_v2.py.
 
-    python cim_trends.py --api-key YOUR_KEY --mailto you@your-institution.edu --start 2012 --end 2026 --out out
+    python cim_trends_v2.py --api-key YOUR_KEY --mailto you@your-institution.edu --start 2012 --end 2026 --out out
 
 Do not commit your API key to the repository. Pass it on the command line, or set it as an
 environment variable instead:
@@ -45,6 +52,7 @@ A full run takes several minutes. Progress lines are printed while it runs, and 
 
     --start, --end   first and last publication year (default 2012 to 2026)
     --bin N          group N years together in the paper-type plots (default 1)
+    --venues A B     only use these venue labels, for example --venues MICRO ISCA DAC
     --broad          also count near-memory computing and memristor crossbar papers
     --out DIR        output folder (default out)
     --from-csv FILE  skip downloading and redraw the plots from an existing cim_papers.csv
@@ -54,9 +62,10 @@ A full run takes several minutes. Progress lines are printed while it runs, and 
     cim_papers.csv              every matched paper: year, venue, title, DOI, type
     counts_year_by_venue.csv    papers per year per venue (the data behind figure 1)
     fig1_cim_per_year.png       number of CIM/PIM papers per year, stacked by venue
+    fig3_cim_lines_by_venue.png one line per venue: papers per year, with a colour and marker per venue
     fig2_type_trends_all.png    paper types per year, all venues
-    fig2_type_trends_architecture.png   same, architecture venues only
-    fig2_type_trends_eda.png            same, EDA venues only
+    fig2_type_trends_<group>.png    same, one file per venue group (circuits, design,
+                                architecture, eda)
 
 The CSV files use commas. If Excel puts everything in one column (common with Dutch or
 other European regional settings), open them with Data > From Text/CSV and choose the
@@ -84,13 +93,15 @@ circuit or device level; other.
   these by hand before using them in the paper.
 - The paper-type labels are heuristic. Spot-check a sample of each type before relying on the
   trend plots.
-- Coverage in OpenAlex is uneven, so a zero or a sudden drop for one venue in one year is
-  probably an indexing gap, not a real drop. 2026 should be treated as a partial year.
-- Some older ISCA and ASPLOS papers are indexed under ACM SIGARCH Computer Architecture News
-  (or SIGPLAN Notices) instead of the conference name. Those records cannot be attributed to
-  a conference and are not counted.
-- The venue-mix affects the type trends, which is why the architecture and EDA plots are
-  produced separately.
+- Coverage in OpenAlex is uneven. In the run of 21 November 2026, ESSERC 2020 and 2026 and
+  ICCAD 2026 had zero papers, and ISSCC 2025 looked low compared with 2023 and 2024. These are
+  probably indexing gaps, not real drops. 2026 should be treated as a partial year.
+- The venue-mix affects the type trends: ISSCC and VLSI papers are almost all silicon, while
+  ICCAD papers are mostly tools and methods. This is why the plots are also produced per
+  venue group.
+- OpenAlex usually has abstracts for ACM venues (ASPLOS, ISCA, DAC) but often not for IEEE
+  circuits venues. Counts from the two kinds of venue are therefore not matched in the same way
+  and should not be compared directly.
 
 ## Data source
 
