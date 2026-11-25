@@ -38,6 +38,16 @@ API = "https://api.openalex.org/works"
 
 # venue label -> (include regex, exclude regex or None, group)
 VENUES = {
+    "ISSCC": (r"international solid[- ]state circuits conference|\bISSCC\b", None, "Circuits"),
+    "VLSI Symp.": (r"symposi\w* on vlsi", None, "Circuits"),
+    "CICC": (r"custom integrated circuits conference|\bCICC\b", None, "Circuits"),
+    "ESSERC/ESSCIRC": (r"european solid[- ]state|\bESSERC\b|\bESSCIRC\b|\bESSDERC\b", None, "Circuits"),
+    "ICCAD": (r"conference on computer[- ]aided design|\bICCAD\b", None, "Design/Systems"),
+    "ASP-DAC": (r"asia and south pacific design automation|\bASP-?DAC\b", None, "Design/Systems"),
+    "ISLPED": (r"low power electronics and design|\bISLPED\b", None, "Design/Systems"),
+    "ISCAS": (r"international symposium on circuits and systems|\bISCAS\b",
+              r"midwest|mwscas|latin|nordic|integrated circuits and systems", "Design/Systems"),
+    # --- architecture and EDA venues (added by collaborator) ---
     "MICRO": (r"symposium on microarchitecture|(?-i:\bMICRO\b)",
               r"^\s*ieee micro\s*$", "Architecture"),          # IEEE Micro is the magazine
     "ASPLOS": (r"architectural support for programming languages and operating systems|\bASPLOS\b",
